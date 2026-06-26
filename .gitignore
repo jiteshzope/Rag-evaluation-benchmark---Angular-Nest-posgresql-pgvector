@@ -1,0 +1,48 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+# build output
+dist/
+build/
+out-tsc/
+*.tsbuildinfo
+
+# generated from the environment by frontend/scripts/generate-environment.mjs
+frontend/src/environments/environment.ts
+
+# angular build cache
+.angular/
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log
+logs/
+
+# runtime / scratch
+.cache/
+coverage/
+tmp/
+.tmp/
+uploads/
+
+# screenshots written by the UI check scripts
+screenshots/
+*.png
+
+# editors / os
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# postgres volume
+.pgdata/

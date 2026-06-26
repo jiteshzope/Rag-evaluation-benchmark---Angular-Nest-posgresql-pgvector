@@ -1,0 +1,33 @@
+{
+  "name": "rag-evaluation-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A RAG evaluation workbench: benchmark Baseline / Advanced Hybrid / Advanced-Pro Adaptive / GraphRAG strategies over a knowledge base with retrieval, answer-quality, efficiency and system metrics. Angular front end, NestJS API, Postgres with pgvector.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "migrate": "npm run migrate --workspace backend",
+    "migrate:status": "npm run migrate:status --workspace backend",
+    "seed": "npm run seed --workspace backend",
+    "dev:backend": "npm run start:dev --workspace backend",
+    "dev:frontend": "npm run start --workspace frontend",
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "typecheck": "npm run typecheck --workspace backend && npm run typecheck --workspace frontend",
+    "test": "npm run test --workspace backend",
+    "test:api": "node scripts/api-contract-check.mjs",
+    "test:ui": "node frontend/scripts/ui-flow-check.mjs && node frontend/scripts/ui-upload-check.mjs",
+    "test:ui:run": "node frontend/scripts/ui-run-check.mjs",
+    "test:ui:cancel": "node frontend/scripts/ui-cancel-check.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
