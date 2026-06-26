@@ -1,0 +1,49 @@
+{
+  "name": "@ragbench/backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main",
+    "seed": "ts-node -r tsconfig-paths/register scripts/seed-default-kb.ts",
+    "seed:reset": "ts-node -r tsconfig-paths/register scripts/seed-default-kb.ts --reset",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "migrate": "ts-node -r tsconfig-paths/register scripts/migrate.ts",
+    "migrate:status": "ts-node -r tsconfig-paths/register scripts/migrate.ts --status"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.12",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.12",
+    "@nestjs/platform-express": "^11.0.12",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "dotenv": "^16.4.7",
+    "mammoth": "^1.9.0",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.89.0",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.14.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.5",
+    "@nestjs/schematics": "^11.0.4",
+    "@nestjs/testing": "^11.0.12",
+    "@types/express": "^5.0.1",
+    "@types/jest": "^29.5.14",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.13.14",
+    "@types/pg": "^8.11.11",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.8.2"
+  }
+}
