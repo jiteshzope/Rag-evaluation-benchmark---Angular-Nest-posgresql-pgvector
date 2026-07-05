@@ -1,0 +1,21 @@
+-- ---------------------------------------------------------------------------
+-- 0002 — drop the ivfflat index. Nothing ever searched through it.
+--
+-- Retrieval in this project is exact and in-process: loadChunks() reads every
+-- row for a strategy and VectorIndex scores them with a linear scan over one
+-- packed Float32Array (see src/rag/vector-index.ts). That is a deliberate
+-- choice, not a shortcut — the corpora are a few thousand chunks at most, and
+-- an approximate index would introduce recall loss indistinguishable from a
+-- retrieval-strategy difference, which is the one thing this benchmark exists
+-- to measure. No query in the codebase uses the <=> operator.
+--
+-- So the index was pure cost: it slowed every seed write and occupied space to
+-- serve no read. It was also mistuned for the data — lists = 50 over ~500 rows
+-- per strategy leaves ~10 vectors per list, and with the default probes = 1 a
+-- search would have scanned about 2% of the corpus.
+--
+-- If SQL-side ANN search is ever wanted (a corpus far larger than memory), add
+-- an HNSW index in a later migration and build it AFTER the rows are loaded.
+-- ---------------------------------------------------------------------------
+
+DROP INDEX IF EXISTS default_kb_chunks_embedding_idx;
