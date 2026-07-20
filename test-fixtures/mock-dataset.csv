@@ -1,0 +1,4 @@
+question,reference_answer,keywords,category
+"How much does the Kestrel K2 weigh?","The Kestrel K2 weighs 840 grams.","840 grams",direct_fact
+"What did firmware 5.0 change about battery drain?","Firmware 5.0 reduced average battery drain by 11 percent across the K2 and K4 Pro.","11 percent;5.0",numerical
+"How long may thermal payload personal data be retained by default?","No longer than 30 days by default under GDPR.","30 days;GDPR",direct_fact

@@ -1,0 +1,4 @@
+{"question":"What is the list price of the Kestrel K7 Enterprise?","referenceAnswer":"46,000 euro per unit.","expected_keywords":["46,000"],"questionType":"direct_fact"}
+{"question":"","reference_answer":"missing question should be skipped","keywords":["x"]}
+not json at all
+{"query":"How many crash repairs does Aegis Cover include annually?","answer":"Two crash repairs annually.","keywords":"two;crash"}

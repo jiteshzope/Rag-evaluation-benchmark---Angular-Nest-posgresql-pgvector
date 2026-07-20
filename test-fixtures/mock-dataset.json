@@ -1,0 +1,20 @@
+[
+  {
+    "question": "What is the flight time of the Kestrel K2?",
+    "reference_answer": "The Kestrel K2 flies for 22 minutes on a single charge.",
+    "keywords": ["22 minutes"],
+    "category": "direct_fact"
+  },
+  {
+    "question": "Where is Northwind Robotics headquartered and since when?",
+    "reference_answer": "Rotterdam, since 2019, after a 42 million euro Series B led by Meridian Ventures.",
+    "keywords": ["Rotterdam", "2019"],
+    "category": "temporal"
+  },
+  {
+    "question": "Which support tier is bundled with the K7 Enterprise contract?",
+    "reference_answer": "Priority support, which responds within 4 hours, is bundled with every K7 Enterprise contract.",
+    "keywords": ["Priority", "4 hours"],
+    "category": "direct_fact"
+  }
+]
