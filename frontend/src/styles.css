@@ -1,0 +1,353 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Theme tokens.
+
+   Both light and dark are *selected* palettes drawn from the same hue ramps and
+   validated against their own surface — dark is not an automatic inversion of
+   light. Series slots are assigned in fixed order and never cycled, so a colour
+   always means the same entity across every chart on the page.
+   --------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  --surface-1: #fcfcfb;
+  --surface-2: #f5f5f3;
+  --surface-3: #ebebe8;
+
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #78776f;
+
+  --border: #e2e2dd;
+  --border-strong: #c9c9c2;
+
+  /* Categorical slots 1-4, validated for the light surface. */
+  --series-1: #2a78d6; /* blue    */
+  --series-2: #eb6834; /* orange  */
+  --series-3: #1baf7a; /* aqua    */
+  --series-4: #eda100; /* yellow  */
+
+  --status-good: #008300;
+  --status-warning: #eda100;
+  --status-serious: #eb6834;
+  --status-critical: #e34948;
+
+  --accent: #2a78d6;
+
+  --grid: #e8e8e4;
+
+  /* Per-step accents. Each setup step owns one slot from the categorical ramp
+     so a step's number, rail and active ring always read as the same colour. */
+  --step-1: var(--series-1);
+  --step-2: var(--series-3);
+  --step-3: var(--series-4);
+  --step-4: var(--series-2);
+
+  /* How strongly a step colour tints a surface. Light surfaces take a light
+     wash; the dark palette below needs a heavier one to register at all. */
+  --tint-wash: 8%;
+  --tint-edge: 32%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --surface-1: #1a1a19;
+    --surface-2: #232322;
+    --surface-3: #2d2d2b;
+
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #93928a;
+
+    --border: #383835;
+    --border-strong: #4a4a46;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+
+    --status-good: #4caf50;
+    --status-warning: #c98500;
+    --status-serious: #d95926;
+    --status-critical: #e66767;
+
+    --accent: #3987e5;
+
+    --grid: #2f2f2c;
+
+    --step-1: var(--series-1);
+    --step-2: var(--series-3);
+    --step-3: var(--series-4);
+    --step-4: var(--series-2);
+
+    --tint-wash: 14%;
+    --tint-edge: 40%;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --surface-1: #1a1a19;
+  --surface-2: #232322;
+  --surface-3: #2d2d2b;
+
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #93928a;
+
+  --border: #383835;
+  --border-strong: #4a4a46;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+
+  --status-good: #4caf50;
+  --status-warning: #c98500;
+  --status-serious: #d95926;
+  --status-critical: #e66767;
+
+  --accent: #3987e5;
+
+  --grid: #2f2f2c;
+
+  --step-1: var(--series-1);
+  --step-2: var(--series-3);
+  --step-3: var(--series-4);
+  --step-4: var(--series-2);
+
+  --tint-wash: 14%;
+  --tint-edge: 40%;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface-2 text-ink-primary font-sans antialiased;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-line bg-surface-1;
+  }
+
+  .card-pad {
+    @apply p-4 sm:p-5;
+  }
+
+  /* Wide content scrolls inside its own container; the page never scrolls
+     horizontally. */
+  .scroll-x {
+    @apply overflow-x-auto;
+    scrollbar-width: thin;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+           transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn text-white;
+    background: var(--accent);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 85%, #000);
+  }
+
+  .btn-secondary {
+    @apply btn border border-line bg-surface-1 text-ink-primary hover:bg-surface-2;
+  }
+
+  .btn-ghost {
+    @apply btn text-ink-secondary hover:bg-surface-2 hover:text-ink-primary;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2
+           px-2.5 py-0.5 text-2xs font-medium text-ink-secondary;
+  }
+
+  /* A chip that carries a step's or a status's own colour. Set --chip-color on
+     the element; the border and text derive from it so contrast holds in both
+     themes without a second hand-picked value. */
+  .chip-tinted {
+    @apply chip;
+    border-color: color-mix(in srgb, var(--chip-color) var(--tint-edge), transparent);
+    background: color-mix(in srgb, var(--chip-color) var(--tint-wash), var(--surface-1));
+    color: color-mix(in srgb, var(--chip-color) 78%, var(--text-primary));
+  }
+
+  /* ── Step chrome ───────────────────────────────────────────────────────
+     Each setup step sets --step to its own colour; everything below reads it,
+     so recolouring a step is a one-line change at the section root. */
+
+  .step-section {
+    @apply relative rounded-card border border-line bg-surface-1 transition-all;
+    /* The coloured spine that makes a section scannable at a glance. */
+    box-shadow: inset 3px 0 0 0 color-mix(in srgb, var(--step) 55%, transparent);
+  }
+
+  .step-section-active {
+    border-color: color-mix(in srgb, var(--step) var(--tint-edge), var(--border));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--step) var(--tint-wash), var(--surface-1)),
+      var(--surface-1) 140px
+    );
+    box-shadow: inset 3px 0 0 0 var(--step);
+  }
+
+  .step-badge {
+    @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold
+           tabular-nums text-white;
+    background: var(--step);
+  }
+
+  .step-badge-idle {
+    background: var(--surface-3);
+    color: var(--text-muted);
+  }
+
+  /* Selectable option card. The ring is the step colour rather than a global
+     accent, so the whole step reads as one unit. */
+  .option-card {
+    @apply relative flex flex-col rounded-lg border border-line bg-surface-1 p-4 text-left
+           transition-all;
+  }
+
+  .option-card:not(.option-card-locked):hover {
+    border-color: color-mix(in srgb, var(--step) 45%, var(--border));
+    transform: translateY(-1px);
+  }
+
+  .option-card-selected {
+    border-color: var(--step);
+    background: color-mix(in srgb, var(--step) var(--tint-wash), var(--surface-1));
+    box-shadow: 0 0 0 1px var(--step);
+  }
+
+  .option-card-locked {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .radio-dot {
+    @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors;
+    border-color: var(--border-strong);
+  }
+
+  .radio-dot-on {
+    border-color: var(--step);
+    background: color-mix(in srgb, var(--step) 18%, transparent);
+  }
+
+  /* Range input.
+     accent-color alone leaves Chromium drawing a near-black track on the light
+     surface, so the track and thumb are painted explicitly from --step. */
+  .range {
+    @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-surface-3;
+  }
+
+  .range::-webkit-slider-thumb {
+    @apply h-4 w-4 appearance-none rounded-full border-2 shadow-sm;
+    border-color: var(--surface-1);
+    background: var(--step);
+  }
+
+  .range::-moz-range-thumb {
+    @apply h-4 w-4 rounded-full border-2;
+    border-color: var(--surface-1);
+    background: var(--step);
+  }
+
+  .range::-moz-range-track {
+    @apply h-1.5 rounded-full;
+    background: var(--surface-3);
+  }
+
+  /* Notice strip used for locks and warnings; --chip-color picks the hue. */
+  .notice {
+    @apply flex items-start gap-2 rounded-lg border p-3 text-xs leading-relaxed;
+    border-color: color-mix(in srgb, var(--chip-color) var(--tint-edge), transparent);
+    background: color-mix(in srgb, var(--chip-color) var(--tint-wash), var(--surface-1));
+    color: var(--text-secondary);
+  }
+
+  .label {
+    @apply text-xs font-medium uppercase tracking-wide text-ink-muted;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden bg-surface-3;
+  }
+
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 animate-shimmer;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--surface-1) 60%, transparent),
+      transparent
+    );
+  }
+}
+
+/* Chart chrome: recessive grid and axes, matching the Recharts styling the
+   React build inherited from its library. */
+.chart-grid line {
+  stroke: var(--grid);
+}
+
+.chart-axis-line,
+.chart-axis-tick-line {
+  stroke: var(--border);
+}
+
+.chart-surface:focus {
+  outline: none;
+}
+
+/* Multi-line truncation, used by the question table and the chunk previews.
+   Tailwind v3 ships line-clamp in core, but these are spelled out so the
+   utility is available even where the plugin ordering differs. */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
