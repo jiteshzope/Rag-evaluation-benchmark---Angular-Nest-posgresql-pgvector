@@ -1,0 +1,177 @@
+@if (geometry(); as g) {
+  <svg
+    class="chart-surface block"
+    [attr.width]="g.width"
+    [attr.height]="g.height"
+    [attr.viewBox]="'0 0 ' + g.width + ' ' + g.height"
+    role="img"
+    (mousemove)="onPointerMove($event)"
+    (mouseleave)="onPointerLeave()"
+  >
+    <!-- Hover band, drawn under the marks so the bars stay the brightest thing. -->
+    @if (cursor(); as c) {
+      <rect
+        [attr.x]="c.x"
+        [attr.y]="c.y"
+        [attr.width]="c.width"
+        [attr.height]="c.height"
+        fill="var(--surface-3)"
+        fill-opacity="0.5"
+      />
+    }
+
+    <g class="chart-grid">
+      @for (tick of g.valueTicks; track tick.value) {
+        @if (isRows()) {
+          <line
+            [attr.x1]="tick.offset"
+            [attr.x2]="tick.offset"
+            [attr.y1]="g.plotTop"
+            [attr.y2]="g.plotBottom"
+            [attr.stroke]="gridStroke"
+          />
+        } @else {
+          <line
+            [attr.x1]="g.plotLeft"
+            [attr.x2]="g.plotRight"
+            [attr.y1]="tick.offset"
+            [attr.y2]="tick.offset"
+            [attr.stroke]="gridStroke"
+          />
+        }
+      }
+    </g>
+
+    <!-- Bars -->
+    @for (category of g.categories; track category.key) {
+      <g>
+        @for (bar of category.bars; track bar.key) {
+          @if (bar.path) {
+            <path [attr.d]="bar.path" [attr.fill]="bar.fill" />
+          }
+          @if (bar.label) {
+            <text
+              [attr.x]="bar.labelX"
+              [attr.y]="bar.labelY"
+              [attr.text-anchor]="bar.labelAnchor"
+              [attr.dominant-baseline]="isRows() ? 'middle' : 'auto'"
+              [attr.font-size]="labelFontSize()"
+              [class]="labelFill()"
+            >
+              {{ bar.label }}
+            </text>
+          }
+        }
+      </g>
+    }
+
+    <!-- Axis lines -->
+    <line
+      class="chart-axis-line"
+      [attr.x1]="g.plotLeft"
+      [attr.x2]="g.plotRight"
+      [attr.y1]="g.plotBottom"
+      [attr.y2]="g.plotBottom"
+      [attr.stroke]="axisLineStroke"
+    />
+    <line
+      class="chart-axis-line"
+      [attr.x1]="g.plotLeft"
+      [attr.x2]="g.plotLeft"
+      [attr.y1]="g.plotTop"
+      [attr.y2]="g.plotBottom"
+      [attr.stroke]="axisLineStroke"
+    />
+
+    <!-- Value-axis ticks -->
+    @for (tick of g.valueTicks; track tick.value) {
+      @if (isRows()) {
+        <text
+          [attr.x]="tick.offset"
+          [attr.y]="g.plotBottom + 10"
+          text-anchor="middle"
+          dominant-baseline="hanging"
+          [attr.font-size]="axisTickFontSize"
+          [attr.fill]="axisTickFill"
+        >
+          {{ tick.label }}
+        </text>
+      } @else {
+        <text
+          [attr.x]="g.plotLeft - 8"
+          [attr.y]="tick.offset"
+          text-anchor="end"
+          dominant-baseline="middle"
+          [attr.font-size]="axisTickFontSize"
+          [attr.fill]="axisTickFill"
+        >
+          {{ tick.label }}
+        </text>
+      }
+    }
+
+    <!-- Category-axis ticks -->
+    @for (category of g.categories; track category.key) {
+      @if (isRows()) {
+        <text
+          [attr.x]="g.plotLeft - 8"
+          [attr.y]="category.center"
+          text-anchor="end"
+          dominant-baseline="middle"
+          [attr.font-size]="axisTickFontSize"
+          [attr.fill]="axisTickFill"
+        >
+          {{ category.label }}
+        </text>
+      } @else {
+        <text
+          [attr.x]="category.center"
+          [attr.y]="g.plotBottom + 10"
+          text-anchor="middle"
+          dominant-baseline="hanging"
+          [attr.font-size]="axisTickFontSize"
+          [attr.fill]="axisTickFill"
+        >
+          {{ category.label }}
+        </text>
+      }
+    }
+  </svg>
+
+  <!--
+    Tooltip.
+
+    Text wears text tokens; the series colour appears only as a small swatch
+    beside the label, never as the text colour itself.
+  -->
+  @if (tooltip(); as t) {
+    <div
+      class="pointer-events-none absolute z-10 min-w-[9rem] rounded-lg border border-line bg-surface-1 px-3 py-2"
+      style="box-shadow: 0 4px 16px rgb(0 0 0 / 0.12)"
+      [style.left.px]="tooltipLeft(t)"
+      [style.top.px]="t.y - 8"
+    >
+      <p class="mb-1.5 text-2xs font-semibold text-ink-primary">{{ t.title }}</p>
+      <ul class="flex flex-col gap-1">
+        @for (row of t.rows; track row.label) {
+          <li class="flex items-center gap-2 text-2xs">
+            <span
+              aria-hidden="true"
+              class="h-2 w-2 shrink-0 rounded-sm"
+              [style.background]="row.color"
+            ></span>
+            <span class="text-ink-secondary">{{ row.label }}</span>
+            <span class="ml-auto pl-3 font-medium tabular-nums text-ink-primary">{{
+              row.value
+            }}</span>
+          </li>
+        }
+      </ul>
+      @if (t.footer) {
+        <div class="mt-1.5 border-t border-line pt-1.5 text-2xs text-ink-muted">{{ t.footer }}</div>
+      }
+    </div>
+  }
+} @else {
+  <div [style.height.px]="chartHeight()"></div>
+}
