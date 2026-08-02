@@ -1,0 +1,180 @@
+<app-step-section
+  [step]="2"
+  color="var(--step-2)"
+  title="Knowledge base"
+  [active]="!knowledgeBase()"
+  [done]="!!knowledgeBase()"
+  hint="Text is extracted and held in memory for this run only. Your choice here also sets the question source in step 3."
+  [statusLabel]="statusLabel()"
+>
+  <!-- ── Featured: the pre-embedded demo corpus ────────────────────── -->
+  @if (defaultKb(); as dkb) {
+    <button
+      type="button"
+      (click)="modeChange.emit('default')"
+      [attr.aria-pressed]="mode() === 'default'"
+      class="option-card mb-3 w-full flex-row items-start gap-3"
+      [class.option-card-selected]="mode() === 'default'"
+    >
+      <span aria-hidden="true" class="radio-dot mt-0.5" [class.radio-dot-on]="mode() === 'default'">
+        @if (mode() === 'default') {
+          <span class="h-2 w-2 rounded-full" style="background: var(--step)"></span>
+        }
+      </span>
+
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h3 class="text-sm font-semibold text-ink-primary">Use the demo knowledge base</h3>
+          @if (dkb.preEmbedded) {
+            <span class="chip-tinted" style="--chip-color: var(--status-good)">
+              <span aria-hidden="true">⚡</span> pre-embedded
+            </span>
+          }
+          <span class="chip-tinted" style="--chip-color: var(--step-2)">recommended</span>
+          <span class="chip">+ demo questions</span>
+        </div>
+
+        <p class="mt-1 text-xs leading-relaxed text-ink-secondary">
+          {{ dkb.label }} — {{ dkb.documentCount }} documents,
+          {{ fmtNumber(dkb.totalChars) }} characters.
+          @if (dkb.preEmbedded) {
+            Vectors and the knowledge graph are already built in pgvector, so the run starts
+            immediately and spends nothing on ingestion.
+          } @else {
+            Vectors are not seeded yet, so this corpus will be embedded on demand.
+          }
+        </p>
+
+        <ul class="mt-2 flex flex-wrap gap-1">
+          @for (c of dkb.categories; track c.name) {
+            <li class="chip py-0 text-[10px]">{{ c.name }} · {{ c.documents }}</li>
+          }
+        </ul>
+
+        @if (dkb.stale) {
+          <p class="mt-2 text-2xs text-status-warning">
+            The corpus on disk has changed since pgvector was seeded — re-run
+            <code>npm run seed</code> for the fastest path.
+          </p>
+        }
+      </div>
+    </button>
+  }
+
+  <p class="mb-2 text-2xs font-medium uppercase tracking-wide text-ink-muted">
+    Or bring your own — you then supply the questions too
+  </p>
+
+  <!-- ── Bring your own ────────────────────────────────────────────── -->
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div class="option-card" [class.option-card-selected]="mode() === 'upload'">
+      <button
+        type="button"
+        (click)="modeChange.emit('upload')"
+        [attr.aria-pressed]="mode() === 'upload'"
+        class="mb-2 flex items-center gap-2 text-left"
+      >
+        <span aria-hidden="true" class="radio-dot" [class.radio-dot-on]="mode() === 'upload'">
+          @if (mode() === 'upload') {
+            <span class="h-2 w-2 rounded-full" style="background: var(--step)"></span>
+          }
+        </span>
+        <h3 class="text-sm font-semibold text-ink-primary">Upload a document</h3>
+      </button>
+
+      <div
+        (dragover)="onDragOver($event)"
+        (dragleave)="dragging.set(false)"
+        (drop)="onDrop($event)"
+        class="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center transition-colors"
+        [class]="dragging() ? 'border-[color:var(--step)] bg-surface-2' : 'border-line'"
+      >
+        <input
+          #kbFileInput
+          type="file"
+          [attr.accept]="limits().acceptedExtensions.join(',')"
+          class="sr-only"
+          (change)="onFileChosen($event)"
+        />
+        <p class="text-xs text-ink-secondary">Drop a file here, or</p>
+        <button
+          type="button"
+          class="btn-secondary mt-2 px-3 py-1.5 text-xs"
+          (click)="kbFileInput.click()"
+          [disabled]="busy()"
+        >
+          {{ busy() ? 'Reading…' : 'Choose file' }}
+        </button>
+        <p class="mt-2 text-2xs text-ink-muted">
+          {{ limits().acceptedExtensions.join(' · ') }} — up to {{ maxMb() }} MB
+        </p>
+      </div>
+    </div>
+
+    <div class="option-card" [class.option-card-selected]="mode() === 'paste'">
+      <button
+        type="button"
+        (click)="modeChange.emit('paste')"
+        [attr.aria-pressed]="mode() === 'paste'"
+        class="mb-2 flex items-center gap-2 text-left"
+      >
+        <span aria-hidden="true" class="radio-dot" [class.radio-dot-on]="mode() === 'paste'">
+          @if (mode() === 'paste') {
+            <span class="h-2 w-2 rounded-full" style="background: var(--step)"></span>
+          }
+        </span>
+        <h3 class="text-sm font-semibold text-ink-primary">Paste text</h3>
+      </button>
+
+      <textarea
+        [value]="pasted()"
+        (input)="pasted.set($any($event.target).value)"
+        (focus)="modeChange.emit('paste')"
+        placeholder="Paste your knowledge base text here…"
+        rows="5"
+        class="flex-1 resize-none rounded-lg border border-line bg-surface-2 p-2.5 font-mono text-2xs text-ink-primary placeholder:text-ink-muted"
+      ></textarea>
+      <div class="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          class="btn-secondary px-3 py-1.5 text-xs"
+          [disabled]="pasted().trim().length < 200 || busy()"
+          (click)="pasteText.emit(pasted())"
+        >
+          Use this text
+        </button>
+        <span class="text-2xs text-ink-muted">
+          {{ fmtNumber(pasted().length) }} chars
+          @if (pasted().trim().length < 200) {
+            (need 200+)
+          }
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Status ────────────────────────────────────────────────────── -->
+  @if (error()) {
+    <p
+      class="mt-3 rounded-lg border border-status-critical/30 bg-surface-1 p-3 text-xs text-status-critical"
+    >
+      {{ error() }}
+    </p>
+  }
+
+  @if (knowledgeBase(); as kb) {
+    <div class="notice mt-3 flex-col" style="--chip-color: var(--step-2)">
+      <!-- &ngsp; survives Angular's whitespace stripping; a plain space between
+           two elements would not, and this one is real text flow rather than a
+           flex gap. -->
+      <p class="text-xs text-ink-primary">
+        <span aria-hidden="true">✓</span>&ngsp;<span class="font-medium">{{ kb.label }}</span> ready
+        · {{ kb.documentCount }} document{{ kb.documentCount === 1 ? '' : 's' }} ·
+        {{ fmtNumber(kb.totalChars) }} characters
+      </p>
+      @if (kb.notice) {
+        <p class="mt-1.5 text-2xs leading-relaxed text-status-warning">{{ kb.notice }}</p>
+      }
+    </div>
+  }
+</app-step-section>

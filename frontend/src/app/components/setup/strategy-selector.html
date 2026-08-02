@@ -1,0 +1,58 @@
+<app-step-section
+  [step]="1"
+  color="var(--step-1)"
+  title="RAG strategy"
+  [done]="selected().length > 0"
+  [hint]="hint()"
+  [statusLabel]="selected().length + ' / ' + max() + ' selected'"
+  statusColor="var(--step-1)"
+>
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    @for (strategy of strategies(); track strategy.id) {
+      <!-- Each strategy keeps its own chart colour here, so the card you picked
+           and its series in the results charts are the same hue. -->
+      <button
+        type="button"
+        (click)="toggle.emit(strategy.id)"
+        [disabled]="isDisabled(strategy.id)"
+        [attr.aria-pressed]="isSelected(strategy.id)"
+        class="option-card gap-2"
+        [class.option-card-selected]="isSelected(strategy.id)"
+        [class.option-card-locked]="isDisabled(strategy.id)"
+        [style.--step]="color(strategy.id)"
+      >
+        <div class="flex items-start gap-2">
+          <span
+            aria-hidden="true"
+            class="mt-1 h-3 w-3 shrink-0 rounded-sm"
+            [style.background]="color(strategy.id)"
+          ></span>
+          <div class="min-w-0 flex-1">
+            <h3 class="text-sm font-semibold text-ink-primary">{{ strategy.label }}</h3>
+            <p class="mt-0.5 text-2xs text-ink-muted">{{ strategy.chunkProfile }} chunking</p>
+          </div>
+          <span
+            aria-hidden="true"
+            class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]"
+            [class]="
+              isSelected(strategy.id)
+                ? 'border-transparent text-white'
+                : 'border-line-strong text-transparent'
+            "
+            [style.background]="isSelected(strategy.id) ? color(strategy.id) : null"
+          >
+            ✓
+          </span>
+        </div>
+
+        <p class="text-xs leading-relaxed text-ink-secondary">{{ strategy.description }}</p>
+
+        <ul class="mt-auto flex flex-wrap gap-1 pt-1">
+          @for (cap of strategy.capabilities; track cap) {
+            <li class="chip py-0 text-[10px]">{{ cap }}</li>
+          }
+        </ul>
+      </button>
+    }
+  </div>
+</app-step-section>

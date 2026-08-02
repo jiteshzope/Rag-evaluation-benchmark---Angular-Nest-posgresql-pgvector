@@ -1,0 +1,283 @@
+<app-step-section
+  [step]="3"
+  color="var(--step-3)"
+  title="Evaluation dataset"
+  [active]="knowledgeBaseReady() && !dataset()"
+  [done]="!!dataset()"
+  [hint]="hint()"
+  [statusLabel]="statusLabel()"
+>
+  @if (lockedToDefault()) {
+    <div class="notice mb-3" style="--chip-color: var(--step-2)">
+      <span aria-hidden="true" class="mt-px">🔒</span>
+      <p>
+        The demo knowledge base runs with its
+        <strong class="text-ink-primary">demo question set</strong> — the reference answers are
+        written from those exact documents, so every run over this corpus is measured against the
+        same ground truth and is comparable to every other.
+        <span class="text-ink-muted">
+          To bring your own questions, upload or paste a knowledge base in step 2.
+        </span>
+      </p>
+    </div>
+  }
+
+  <div class="grid gap-3 lg:grid-cols-2">
+    <!-- Demo question set -->
+    <app-option-card
+      [selected]="mode() === 'default'"
+      [disabled]="!defaultKbSelected() || !defaultQa()"
+      title="Demo question set"
+      (select)="onSelectDefault()"
+    >
+      <ng-container optionBadge>
+        @if (defaultQa()) {
+          <span class="chip-tinted" style="--chip-color: var(--step-3)">
+            {{ lockedToDefault() ? 'in use' : 'recommended' }}
+          </span>
+        }
+      </ng-container>
+
+      @if (defaultQa(); as qa) {
+        <p class="text-xs leading-relaxed text-ink-secondary">
+          {{ qa.questionCount }} hand-written questions with reference answers and expected
+          keywords, spanning seven question types — including multi-document and corpus-wide
+          questions that plain vector retrieval struggles with.
+        </p>
+
+        <ul class="mt-2 flex flex-wrap gap-1">
+          @for (t of qa.byType; track t.questionType) {
+            <li class="chip py-0 text-[10px]">
+              {{ questionTypeLabel(t.questionType) }} · {{ t.count }}
+            </li>
+          }
+        </ul>
+
+        @if (!defaultKbSelected()) {
+          <p class="mt-2 text-2xs text-status-warning">
+            Available only with the demo knowledge base — these questions are written against it.
+          </p>
+        }
+
+        @if (mode() === 'default') {
+          <div class="mt-3 border-t border-line pt-3">
+            <label for="qcount" class="label mb-1.5 block">
+              Questions to run:
+              <span class="tabular-nums text-ink-primary">{{ questionCount() }}</span>
+            </label>
+            <input
+              id="qcount"
+              type="range"
+              [attr.min]="5"
+              [attr.max]="defaultCountMax()"
+              [attr.step]="5"
+              [value]="questionCount()"
+              (input)="onDefaultCountInput($event)"
+              class="range"
+            />
+            <p class="mt-1 text-2xs text-ink-muted">
+              Sampled evenly across question types so every bar in the charts has data. More
+              questions cost more and take longer.
+            </p>
+          </div>
+        }
+      } @else {
+        <p class="text-xs text-ink-muted">The demo question set is not available.</p>
+      }
+    </app-option-card>
+
+    <!-- Auto-generate -->
+    <app-option-card
+      [selected]="mode() === 'generate'"
+      [disabled]="lockedToDefault()"
+      [lockReason]="lockReason()"
+      title="Generate questions from the knowledge base"
+      (select)="modeChange.emit('generate')"
+    >
+      <ng-container optionBadge>
+        @if (generateQuota(); as quota) {
+          <span class="chip">{{ quota.remaining }}/{{ quota.limit }} left today</span>
+        }
+      </ng-container>
+
+      <p class="text-xs leading-relaxed text-ink-secondary">
+        An LLM writes questions from individual chunks and records which chunk produced each one.
+        That gives retrieval metrics real ground truth instead of derived labels.
+      </p>
+
+      @if (mode() === 'generate' && !lockedToDefault()) {
+        <div class="mt-3 border-t border-line pt-3">
+          <label for="gcount" class="label mb-1.5 block">
+            Generate: <span class="tabular-nums text-ink-primary">{{ questionCount() }}</span>
+            questions
+          </label>
+          <input
+            id="gcount"
+            type="range"
+            [attr.min]="5"
+            [attr.max]="limits().maxGeneratedQuestions"
+            [attr.step]="5"
+            [value]="generateCount()"
+            (input)="onGenerateCountInput($event)"
+            class="range"
+          />
+          <button
+            type="button"
+            class="btn-primary mt-2 w-full py-1.5 text-xs"
+            (click)="generate.emit()"
+            [disabled]="busy() || !knowledgeBaseReady() || generateQuota()?.remaining === 0"
+          >
+            {{ busy() ? 'Generating…' : 'Generate ' + generateCount() + ' questions' }}
+          </button>
+          @if (!knowledgeBaseReady()) {
+            <p class="mt-1.5 text-2xs text-status-warning">
+              Add a knowledge base first — questions are written from it.
+            </p>
+          }
+        </div>
+      }
+    </app-option-card>
+
+    <!-- Upload -->
+    <app-option-card
+      [selected]="mode() === 'upload'"
+      [disabled]="lockedToDefault()"
+      [lockReason]="lockReason()"
+      title="Upload a dataset"
+      (select)="modeChange.emit('upload')"
+    >
+      <p class="text-xs leading-relaxed text-ink-secondary">
+        JSON, JSONL or CSV. Field names are matched leniently —
+        <code class="text-2xs">answer</code>, <code class="text-2xs">reference_answer</code> and
+        <code class="text-2xs">referenceAnswer</code> all work.
+      </p>
+      <input
+        #datasetFileInput
+        type="file"
+        accept=".json,.jsonl,.csv,.txt"
+        class="sr-only"
+        (change)="onFileChosen($event)"
+      />
+      <button
+        type="button"
+        class="btn-secondary mt-2 self-start px-3 py-1.5 text-xs"
+        (click)="datasetFileInput.click()"
+        [disabled]="busy() || lockedToDefault()"
+      >
+        Choose dataset file
+      </button>
+    </app-option-card>
+
+    <!-- Paste -->
+    <app-option-card
+      [selected]="mode() === 'paste'"
+      [disabled]="lockedToDefault()"
+      [lockReason]="lockReason()"
+      title="Paste a dataset"
+      (select)="modeChange.emit('paste')"
+    >
+      <textarea
+        [value]="pasted()"
+        (input)="pasted.set($any($event.target).value)"
+        (focus)="modeChange.emit('paste')"
+        [placeholder]="samplePlaceholder"
+        rows="5"
+        [disabled]="lockedToDefault()"
+        class="w-full resize-none rounded-lg border border-line bg-surface-2 p-2.5 font-mono text-2xs text-ink-primary placeholder:text-ink-muted disabled:cursor-not-allowed"
+      ></textarea>
+      <button
+        type="button"
+        class="btn-secondary mt-2 self-start px-3 py-1.5 text-xs"
+        [disabled]="pasted().trim().length < 10 || busy() || lockedToDefault()"
+        (click)="paste.emit(pasted())"
+      >
+        Use this dataset
+      </button>
+    </app-option-card>
+  </div>
+
+  @if (error()) {
+    <p
+      class="mt-3 rounded-lg border border-status-critical/30 bg-surface-1 p-3 text-xs text-status-critical"
+    >
+      {{ error() }}
+    </p>
+  }
+
+  @if (dataset(); as ds) {
+    <div class="notice mt-3 flex-col" style="--chip-color: var(--step-3)">
+      <div class="flex w-full flex-wrap items-center gap-2">
+        <span aria-hidden="true">✓</span>
+        <p class="text-xs font-medium text-ink-primary">
+          {{ ds.questionCount }} question{{ ds.questionCount === 1 ? '' : 's' }} ready
+        </p>
+        @for (t of ds.byType; track t.questionType) {
+          <span class="chip py-0 text-[10px]">
+            {{ questionTypeLabel(t.questionType) }} · {{ t.count }}
+          </span>
+        }
+        @if (items().length > 0) {
+          <button
+            type="button"
+            class="btn-ghost ml-auto px-2 py-0.5 text-2xs"
+            (click)="showItems.set(!showItems())"
+          >
+            {{ showItems() ? 'Hide' : 'Review' }} questions
+          </button>
+        }
+      </div>
+
+      @if (ds.available && ds.available > ds.questionCount && !ds.truncated) {
+        <p class="mt-1.5 text-2xs text-ink-muted">
+          Sampled {{ ds.questionCount }} of {{ ds.available }}, evenly across question types.
+        </p>
+      }
+
+      @if (ds.truncated) {
+        <p class="mt-1.5 text-2xs text-status-warning">
+          Capped at {{ limits().maxQuestions }} questions for this run.
+        </p>
+      }
+
+      @if (ds.skipped.length > 0) {
+        <p class="mt-1.5 text-2xs text-status-warning">
+          {{ ds.skipped.length }} row{{ ds.skipped.length === 1 ? '' : 's' }} skipped — first: line
+          {{ ds.skipped[0].line }}, {{ ds.skipped[0].reason }}.
+        </p>
+      }
+
+      @if (showItems() && items().length > 0) {
+        <div
+          class="scroll-x mt-3 max-h-64 w-full overflow-y-auto rounded border border-line bg-surface-1"
+        >
+          <table class="w-full border-collapse text-2xs">
+            <thead class="sticky top-0 bg-surface-2">
+              <tr class="border-b border-line">
+                <th scope="col" class="px-2 py-1.5 text-left font-medium text-ink-secondary">
+                  Question
+                </th>
+                <th scope="col" class="px-2 py-1.5 text-left font-medium text-ink-secondary">
+                  Type
+                </th>
+                <th scope="col" class="px-2 py-1.5 text-left font-medium text-ink-secondary">
+                  Keywords
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of items(); track item.id) {
+                <tr class="border-b border-line/60 last:border-0">
+                  <td class="px-2 py-1.5 text-ink-primary">{{ item.question }}</td>
+                  <td class="whitespace-nowrap px-2 py-1.5 text-ink-secondary">
+                    {{ questionTypeLabel(item.questionType) }}
+                  </td>
+                  <td class="px-2 py-1.5 text-ink-muted">{{ item.expectedKeywords.join(', ') }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</app-step-section>
