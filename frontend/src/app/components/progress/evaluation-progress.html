@@ -1,0 +1,154 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-5">
+  <header class="flex items-center gap-3">
+    @if (store.status() === 'evaluating') {
+      <span aria-hidden="true" class="relative flex h-2.5 w-2.5 shrink-0">
+        <span
+          class="absolute inline-flex h-full w-full animate-ping rounded-full opacity-70"
+          style="background: var(--step-4)"
+        ></span>
+        <span
+          class="relative inline-flex h-2.5 w-2.5 rounded-full"
+          style="background: var(--step-4)"
+        ></span>
+      </span>
+    }
+    <div>
+      <h1 class="text-lg font-semibold text-ink-primary">{{ heading() }}</h1>
+      <p class="mt-1 text-xs text-ink-secondary">
+        Every question is retrieved, answered and judged live — no result is cached.
+      </p>
+    </div>
+  </header>
+
+  @if (store.error(); as message) {
+    <div class="rounded-lg border border-status-critical/30 bg-surface-1 p-4">
+      <p class="text-sm font-medium text-status-critical">{{ message }}</p>
+    </div>
+  }
+
+  <!-- ── Overall progress ──────────────────────────────────────────── -->
+  <section class="step-section step-section-active card-pad" style="--step: var(--step-4)">
+    <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+      <p class="text-sm font-medium text-ink-primary">
+        {{ store.progress().overallCompleted }} /
+        {{ store.progress().overallTotal || '—' }} questions
+      </p>
+      <p class="text-xs tabular-nums text-ink-secondary">
+        {{ pctLabel() }}% · {{ fmtDuration(elapsed()) }} elapsed · {{ fmtCost(spentSoFar()) }} spent
+      </p>
+    </div>
+
+    <div
+      class="h-2.5 w-full overflow-hidden rounded-full bg-surface-3"
+      role="progressbar"
+      [attr.aria-valuenow]="pctLabel()"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <!-- The bar sweeps the four step colours, so the fill itself carries how
+           far through the run you are, not just its length. -->
+      <div
+        class="h-full rounded-full transition-all duration-500"
+        [style.width.%]="barWidth()"
+        style="
+          background: linear-gradient(
+            90deg,
+            var(--step-1),
+            var(--step-3) 45%,
+            var(--step-4) 75%,
+            var(--step-2)
+          );
+        "
+      ></div>
+    </div>
+
+    @if (store.progress().currentQuestion; as question) {
+      <p class="mt-2 truncate text-xs text-ink-muted" [title]="question">
+        <span class="font-medium text-ink-secondary">{{ currentStrategyLabel() }}</span>
+        — {{ question }}
+      </p>
+    }
+
+    <button type="button" (click)="cancel.emit()" class="btn-secondary mt-3 px-3 py-1.5 text-xs">
+      Cancel run
+    </button>
+  </section>
+
+  <!-- ── Per-strategy indexing + progress ──────────────────────────── -->
+  <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    @for (card of cards(); track card.id) {
+      <div class="step-section card-pad flex flex-col gap-2" [style.--step]="card.color">
+        <div class="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            class="h-2.5 w-2.5 shrink-0 rounded-sm"
+            [style.background]="card.color"
+          ></span>
+          <h3 class="text-sm font-semibold text-ink-primary">{{ card.label }}</h3>
+          @if (card.done) {
+            <span class="chip-tinted ml-auto" style="--chip-color: var(--status-good)">✓ done</span>
+          }
+        </div>
+
+        @if (card.indexing; as indexing) {
+          <p class="text-2xs text-ink-secondary">
+            @if (indexing.done) {
+              {{ chunkCountLabel(indexing.chunkCount) }} chunks in
+              {{ fmtDuration(indexing.indexingMs)
+              }}{{ indexing.fromCache ? ' · pre-embedded' : '' }}
+              @if (indexing.graph; as graph) {
+                <br />
+                {{ graph.entities }} entities · {{ graph.relationships }} relationships ·
+                {{ graph.communities }} communities
+              }
+            } @else {
+              <span class="text-ink-muted">{{ indexing.message }}…</span>
+            }
+          </p>
+        }
+
+        @if (card.progress; as progress) {
+          <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-3">
+            <div
+              class="h-full rounded-full transition-all duration-300"
+              [style.width.%]="card.progressPct"
+              [style.background]="card.color"
+            ></div>
+          </div>
+          <p class="text-2xs tabular-nums text-ink-muted">
+            {{ progress.completed }} / {{ progress.total
+            }}{{ card.avgNdcg !== null ? ' · running nDCG ' + fmtScore(card.avgNdcg) : '' }}
+          </p>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- ── Latest results streaming in ───────────────────────────────── -->
+  @if (latest().length > 0) {
+    <section class="card">
+      <h2 class="border-b border-line p-3 text-sm font-semibold text-ink-primary">
+        Latest results
+        <span class="ml-2 font-normal text-ink-muted">
+          {{ store.liveResults().length }} completed
+        </span>
+      </h2>
+      <ul class="divide-y divide-line/60">
+        @for (row of latest(); track row.key) {
+          <li class="flex items-center gap-3 p-3 text-xs">
+            <span
+              aria-hidden="true"
+              class="h-2 w-2 shrink-0 rounded-sm"
+              [style.background]="row.color"
+            ></span>
+            <span class="min-w-0 flex-1 truncate text-ink-primary" [title]="row.question">
+              {{ row.question }}
+            </span>
+            <span class="shrink-0 tabular-nums text-ink-secondary">nDCG {{ row.ndcg }}</span>
+            <span class="shrink-0 font-medium" [class]="row.verdictClass">{{ row.verdict }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>
