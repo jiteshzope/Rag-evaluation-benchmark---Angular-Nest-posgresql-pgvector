@@ -1,0 +1,32 @@
+@if (summaries().length === 0) {
+  <app-empty-chart message="No strategies completed yet." />
+} @else {
+  <app-chart-frame
+    title="Strategy comparison"
+    subtitle="Every metric, every strategy, one view. Retrieval metrics on the left, answer-quality metrics on the right."
+    [aside]="aside()"
+  >
+    <div class="scroll-x">
+      <div [style.min-width.px]="minWidth">
+        <app-bar-chart
+          [data]="data()"
+          categoryKey="metric"
+          [series]="series()"
+          [chartHeight]="280"
+          [margin]="comparisonMargin"
+          [valueDomain]="scoreDomain"
+          [valueTicks]="scoreTicks"
+          [axisWidth]="44"
+          [maxBarSize]="22"
+          [tickFormat]="tickFormat"
+          [tooltipFormat]="tooltipFormat"
+          [labelFormat]="labelFormat"
+        />
+      </div>
+    </div>
+
+    <app-chart-legend [items]="legend()" />
+
+    <app-data-table chartTable [columns]="tableColumns()" [rows]="tableRows()" />
+  </app-chart-frame>
+}

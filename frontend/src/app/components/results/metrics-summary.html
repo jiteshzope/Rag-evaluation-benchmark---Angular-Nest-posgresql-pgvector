@@ -1,0 +1,156 @@
+<section aria-label="Headline metrics">
+  <div class="mb-3 flex flex-wrap items-center gap-2">
+    <span aria-hidden="true" class="h-3 w-3 rounded-sm" [style.background]="color()"></span>
+    <h2 class="text-base font-semibold text-ink-primary">{{ summary().label }}</h2>
+    <span class="chip">{{ summary().questionCount }} questions</span>
+    <span class="chip">{{ chunkCount() }} chunks</span>
+    @if (summary().indexing.fromCache) {
+      <span class="chip">pre-embedded</span>
+    }
+    @if (summary().indexing.graph; as graph) {
+      <span class="chip">
+        {{ graph.entities }} entities · {{ graph.communities }} communities
+      </span>
+    }
+    @if (summary().failures > 0) {
+      <span class="chip border-status-critical/40 text-status-critical">
+        {{ summary().failures }} failed
+      </span>
+    }
+    @if (comparisonLabel(); as label) {
+      <span class="text-2xs text-ink-muted">vs {{ label }}</span>
+    }
+  </div>
+
+  <div class="flex flex-col gap-5">
+    <app-metric-family
+      title="Overall"
+      blurb="retrieval and answer quality blended, penalised by failures"
+      [color]="color()"
+    >
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <app-stat-tile
+          [hero]="true"
+          label="Composite"
+          [value]="fmtScore(summary().compositeScore)"
+          [delta]="d(getComposite)"
+        />
+        <app-stat-tile label="Verdicts" [value]="verdictsValue()" [hint]="verdictsHint()" />
+      </div>
+    </app-metric-family>
+
+    <app-metric-family
+      title="Retrieval"
+      blurb="did the retriever surface the right passages?"
+      color="var(--step-1)"
+    >
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <app-stat-tile
+          [hero]="true"
+          label="nDCG@5"
+          [value]="fmtScore(getNdcg(summary()))"
+          [delta]="d(getNdcg)"
+        />
+        <app-stat-tile label="MRR" [value]="fmtScore(getMrr(summary()))" [delta]="d(getMrr)" />
+        <app-stat-tile
+          label="Recall@5"
+          [value]="fmtScore(getRecall(summary()))"
+          [delta]="d(getRecall)"
+        />
+        <app-stat-tile
+          label="Precision@5"
+          [value]="fmtScore(getPrecision(summary()))"
+          [delta]="d(getPrecision)"
+        />
+        <app-stat-tile
+          label="Hit rate@5"
+          [value]="fmtScore(getHitRate(summary()))"
+          [delta]="d(getHitRate)"
+        />
+        <app-stat-tile
+          label="Context precision"
+          [value]="fmtScore(getContextPrecision(summary()))"
+          [delta]="d(getContextPrecision)"
+        />
+        <app-stat-tile
+          label="Context recall"
+          [value]="fmtScore(getContextRecall(summary()))"
+          [delta]="d(getContextRecall)"
+        />
+        <app-stat-tile
+          label="Context keywords"
+          [value]="fmtScore(getContextKeywords(summary()))"
+          [delta]="d(getContextKeywords)"
+        />
+      </div>
+    </app-metric-family>
+
+    <app-metric-family
+      title="Answer quality"
+      blurb="graded by a judge model that sees the reference answer"
+      color="var(--step-2)"
+    >
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <app-stat-tile
+          [hero]="true"
+          label="Judge score"
+          [value]="fmtScore(getJudge(summary()))"
+          [delta]="d(getJudge)"
+        />
+        <app-stat-tile
+          label="Faithfulness"
+          [value]="fmtScore(getFaithfulness(summary()))"
+          [delta]="d(getFaithfulness)"
+        />
+        <app-stat-tile
+          label="Correctness"
+          [value]="fmtScore(getCorrectness(summary()))"
+          [delta]="d(getCorrectness)"
+        />
+        <app-stat-tile
+          label="Relevance"
+          [value]="fmtScore(getRelevance(summary()))"
+          [delta]="d(getRelevance)"
+        />
+        <app-stat-tile
+          label="Answer keywords"
+          [value]="fmtScore(getAnswerKeywords(summary()))"
+          [delta]="d(getAnswerKeywords)"
+        />
+        <app-stat-tile
+          label="Ref. similarity"
+          [value]="fmtScore(getRefSimilarity(summary()))"
+          [delta]="d(getRefSimilarity)"
+        />
+      </div>
+    </app-metric-family>
+
+    <app-metric-family
+      title="Efficiency"
+      blurb="what that quality cost in money, tokens and seconds"
+      color="var(--step-4)"
+    >
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <app-stat-tile
+          [hero]="true"
+          label="Cost / question"
+          [value]="fmtCost(getCostPerQuestion(summary()))"
+          [delta]="d(getCostPerQuestion)"
+          [lowerIsBetter]="true"
+        />
+        <app-stat-tile
+          label="Tokens / question"
+          [value]="fmtTokens(getTokensPerQuestion(summary()))"
+          [delta]="d(getTokensPerQuestion)"
+          [lowerIsBetter]="true"
+        />
+        <app-stat-tile
+          label="p95 latency"
+          [value]="fmtDuration(getP95Latency(summary()))"
+          [delta]="d(getP95Latency)"
+          [lowerIsBetter]="true"
+        />
+      </div>
+    </app-metric-family>
+  </div>
+</section>

@@ -1,0 +1,62 @@
+<div class="card card-pad">
+  <h3 class="text-sm font-semibold text-ink-primary">Quality against cost and latency</h3>
+  <p class="mt-0.5 text-xs text-ink-secondary">
+    The composite score weights retrieval and answer quality equally, then scales by the share of
+    questions that completed.
+  </p>
+
+  <div class="scroll-x mt-3">
+    <table class="w-full border-collapse text-xs">
+      <thead>
+        <tr class="border-b border-line">
+          <th scope="col" class="px-2 py-2 text-left font-medium text-ink-secondary">Strategy</th>
+          <th scope="col" class="px-2 py-2 text-right font-medium text-ink-secondary">Composite</th>
+          <th scope="col" class="px-2 py-2 text-right font-medium text-ink-secondary">nDCG@5</th>
+          <th scope="col" class="px-2 py-2 text-right font-medium text-ink-secondary">Faithful</th>
+          <th scope="col" class="px-2 py-2 text-right font-medium text-ink-secondary">Cost / Q</th>
+          <th scope="col" class="px-2 py-2 text-right font-medium text-ink-secondary">
+            p95 latency
+          </th>
+          <th scope="col" class="px-2 py-2 text-right font-medium text-ink-secondary">Chunks</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.strategy) {
+          <tr class="border-b border-line/60 last:border-0">
+            <th scope="row" class="px-2 py-2 text-left font-medium text-ink-primary">
+              <span class="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  class="h-2.5 w-2.5 shrink-0 rounded-sm"
+                  [style.background]="row.color"
+                ></span>
+                {{ row.label }}
+                @if (row.bestQuality) {
+                  <span class="chip border-status-good/40 text-status-good">best quality</span>
+                }
+                @if (row.cheapest) {
+                  <span class="chip">cheapest</span>
+                }
+              </span>
+            </th>
+            <td class="px-2 py-2 text-right font-medium tabular-nums text-ink-primary">
+              {{ row.composite }}
+            </td>
+            <td class="px-2 py-2 text-right tabular-nums text-ink-secondary">{{ row.ndcg }}</td>
+            <td class="px-2 py-2 text-right tabular-nums text-ink-secondary">
+              {{ row.faithfulness }}
+            </td>
+            <td class="px-2 py-2 text-right tabular-nums text-ink-secondary">{{ row.cost }}</td>
+            <td class="px-2 py-2 text-right tabular-nums text-ink-secondary">{{ row.latency }}</td>
+            <td class="px-2 py-2 text-right tabular-nums text-ink-secondary">
+              {{ row.chunks }}
+              @if (row.entities !== null) {
+                <span class="ml-1 text-ink-muted">· {{ row.entities }} entities</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

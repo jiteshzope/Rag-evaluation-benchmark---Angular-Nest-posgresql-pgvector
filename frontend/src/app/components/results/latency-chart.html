@@ -1,0 +1,25 @@
+<app-chart-frame
+  title="Latency by pipeline phase"
+  subtitle="Mean and 95th percentile. A strategy that wins on quality but costs seconds per question is a different trade-off."
+  [aside]="aside()"
+>
+  <app-bar-chart
+    [data]="data()"
+    categoryKey="phase"
+    [series]="series"
+    [chartHeight]="210"
+    [axisWidth]="54"
+    [maxBarSize]="30"
+    [tickFormat]="tickFormat"
+    [tooltipFormat]="tooltipFormat"
+    [labelFormat]="labelFormat"
+  />
+
+  <app-chart-legend [items]="legend" />
+
+  <app-data-table
+    chartTable
+    [columns]="['Phase', 'Mean', 'Median', 'p95', 'Max']"
+    [rows]="tableRows()"
+  />
+</app-chart-frame>

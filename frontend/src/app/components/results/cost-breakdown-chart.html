@@ -1,0 +1,41 @@
+@if (data().length === 0) {
+  <app-chart-frame title="Cost per question by stage" [hasTable]="false">
+    <app-empty-chart message="No cost recorded yet." />
+  </app-chart-frame>
+} @else {
+  <app-chart-frame
+    title="Cost per question by stage"
+    subtitle="The question the benchmark exists to answer: does the retrieval gain justify the extra spend?"
+    [aside]="aside()"
+  >
+    <app-bar-chart
+      [data]="data()"
+      categoryKey="stage"
+      [series]="series"
+      orientation="rows"
+      [chartHeight]="chartHeight()"
+      [margin]="rowsMargin"
+      [axisWidth]="104"
+      [maxBarSize]="20"
+      [cellColors]="ramp"
+      [tickFormat]="tickFormat"
+      [tooltipFormat]="tooltipFormat"
+      [labelFormat]="labelFormat"
+      labelFill="fill-ink-secondary"
+      [labelFontSize]="10"
+    />
+
+    <p class="mt-1 text-2xs text-ink-muted">
+      Total for this run:
+      <span class="font-medium text-ink-secondary">{{ totalCost() }}</span>
+      across {{ summary().questionCount }} question{{ summary().questionCount === 1 ? '' : 's' }}
+      {{ summary().indexing.fromCache ? ' · indexing served from pre-embedded vectors' : '' }}
+    </p>
+
+    <app-data-table
+      chartTable
+      [columns]="['Stage', 'Cost / question', 'Tokens / question']"
+      [rows]="tableRows()"
+    />
+  </app-chart-frame>
+}
