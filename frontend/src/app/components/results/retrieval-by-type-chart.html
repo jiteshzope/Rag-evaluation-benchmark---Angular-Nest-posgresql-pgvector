@@ -1,0 +1,38 @@
+@if (data().length === 0) {
+  <app-chart-frame title="Retrieval quality by question type" [hasTable]="false">
+    <app-empty-chart message="No completed questions yet." />
+  </app-chart-frame>
+} @else {
+  <app-chart-frame
+    title="Retrieval quality by question type"
+    subtitle="Did the retriever find the right evidence? Higher is better; 1.0 is a perfect ranking."
+    [aside]="aside()"
+  >
+    <div class="scroll-x">
+      <div [style.min-width.px]="minWidth()">
+        <app-bar-chart
+          [data]="data()"
+          categoryKey="type"
+          [series]="series"
+          [chartHeight]="260"
+          [valueDomain]="scoreDomain"
+          [valueTicks]="scoreTicks"
+          [axisWidth]="44"
+          [maxBarSize]="26"
+          [tickFormat]="tickFormat"
+          [tooltipFormat]="tooltipFormat"
+          [labelFormat]="labelFormat"
+          [tooltipFooter]="tooltipFooter"
+        />
+      </div>
+    </div>
+
+    <app-chart-legend [items]="legend" />
+
+    <app-data-table
+      chartTable
+      [columns]="['Question type', 'n', 'MRR', 'nDCG@5', 'Recall@5']"
+      [rows]="tableRows()"
+    />
+  </app-chart-frame>
+}

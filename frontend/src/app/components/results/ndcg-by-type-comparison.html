@@ -1,0 +1,33 @@
+@if (data().length === 0 || summaries().length === 0) {
+  <app-chart-frame title="nDCG@5 by question type, across strategies" [hasTable]="false">
+    <app-empty-chart message="No completed questions yet." />
+  </app-chart-frame>
+} @else {
+  <app-chart-frame
+    title="nDCG@5 by question type, across strategies"
+    subtitle="No strategy usually wins everywhere. Look for the types where the advanced pipelines pull ahead — that is where their extra cost is buying something."
+  >
+    <div class="scroll-x">
+      <div [style.min-width.px]="minWidth()">
+        <app-bar-chart
+          [data]="data()"
+          categoryKey="type"
+          [series]="series()"
+          [chartHeight]="280"
+          [margin]="comparisonMargin"
+          [valueDomain]="scoreDomain"
+          [valueTicks]="scoreTicks"
+          [axisWidth]="44"
+          [maxBarSize]="22"
+          [tickFormat]="tickFormat"
+          [tooltipFormat]="tooltipFormat"
+          [labelFormat]="labelFormat"
+        />
+      </div>
+    </div>
+
+    <app-chart-legend [items]="legend()" />
+
+    <app-data-table chartTable [columns]="tableColumns()" [rows]="tableRows()" />
+  </app-chart-frame>
+}
