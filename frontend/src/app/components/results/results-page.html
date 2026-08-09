@@ -1,0 +1,102 @@
+@if (ordered().length === 0) {
+  <div class="mx-auto max-w-2xl py-16 text-center">
+    <p class="text-sm text-ink-secondary">No results yet.</p>
+    <button type="button" class="btn-secondary mt-4" (click)="reset.emit()">
+      Start a new evaluation
+    </button>
+  </div>
+} @else {
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <header
+      class="step-section step-section-active card-pad flex flex-wrap items-center justify-between gap-3"
+      style="--step: var(--status-good)"
+    >
+      <div>
+        <div class="flex items-center gap-2">
+          <span aria-hidden="true" class="step-badge">✓</span>
+          <h1 class="text-xl font-semibold text-ink-primary">Results</h1>
+        </div>
+        <p class="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-xs text-ink-secondary">
+          <span class="chip-tinted" style="--chip-color: var(--step-1)">
+            {{ ordered().length }} strateg{{ ordered().length === 1 ? 'y' : 'ies' }}
+          </span>
+          <span class="chip-tinted" style="--chip-color: var(--step-3)">
+            {{ ordered()[0].questionCount }} questions each
+          </span>
+          <span class="chip-tinted" style="--chip-color: var(--step-4)">
+            {{ fmtCost(store.totalCostUsd()) }} total
+          </span>
+          @if (store.durationMs() !== null) {
+            <span class="chip">{{ fmtDuration(store.durationMs()) }}</span>
+          }
+        </p>
+      </div>
+      <button type="button" class="btn-primary" (click)="reset.emit()">
+        <span aria-hidden="true">↺</span> New evaluation
+      </button>
+    </header>
+
+    <!-- ── Cross-strategy comparison ─────────────────────────────────── -->
+    @if (ordered().length > 1) {
+      <section class="flex flex-col gap-4">
+        <app-tradeoff-table [summaries]="ordered()" />
+        <div class="grid gap-4 xl:grid-cols-2">
+          <app-strategy-comparison-chart [summaries]="ordered()" />
+          <app-ndcg-by-type-comparison [summaries]="ordered()" />
+        </div>
+      </section>
+
+      <!-- ── Per-strategy detail ───────────────────────────────────────── -->
+      <div
+        role="tablist"
+        aria-label="Strategy"
+        class="flex flex-wrap gap-1 rounded-lg border border-line bg-surface-1 p-1"
+      >
+        <!-- The selected tab picks up its strategy's chart colour, so the tab and
+             the series it drives below are unmistakably the same. -->
+        @for (tab of tabs(); track tab.strategy) {
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="tab.active"
+            (click)="store.focusStrategy(tab.strategy)"
+            class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
+            [class]="tab.active ? 'text-ink-primary' : 'text-ink-secondary hover:bg-surface-2'"
+            [style.background]="tab.active ? tabBackground(tab.color) : null"
+            [style.box-shadow]="tab.active ? tabRing(tab.color) : null"
+          >
+            <span
+              aria-hidden="true"
+              class="h-2 w-2 rounded-sm"
+              [style.background]="tab.color"
+            ></span>
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (focused(); as summary) {
+      <app-metrics-summary [summary]="summary" [comparison]="comparison()" />
+
+      <div class="grid gap-4 xl:grid-cols-2">
+        <app-retrieval-by-type-chart [summary]="summary" />
+        <app-answer-quality-chart [summary]="summary" />
+        <app-token-usage-chart [summary]="summary" />
+        <app-cost-breakdown-chart [summary]="summary" />
+        <app-latency-chart [summary]="summary" />
+      </div>
+    }
+
+    <!-- ── Per-question explorer ─────────────────────────────────────── -->
+    <app-question-results-table
+      [results]="store.liveResults()"
+      [strategies]="store.selectedStrategies()"
+      (select)="store.selectQuestion({ itemId: $event.itemId, strategy: $event.strategy })"
+    />
+
+    @if (drawerResult(); as result) {
+      <app-question-detail-drawer [result]="result" (close)="store.selectQuestion(null)" />
+    }
+  </div>
+}

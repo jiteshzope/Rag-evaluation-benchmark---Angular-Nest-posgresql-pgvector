@@ -1,0 +1,169 @@
+<div class="card">
+  <div class="flex flex-wrap items-center gap-2 border-b border-line p-3">
+    <h3 class="mr-auto text-sm font-semibold text-ink-primary">
+      Question results
+      <span class="ml-2 font-normal text-ink-muted">{{ filtered().length }} rows</span>
+    </h3>
+
+    <input
+      type="search"
+      [value]="query()"
+      (input)="setQuery($any($event.target).value)"
+      placeholder="Search questions and answers…"
+      class="w-48 rounded-lg border border-line bg-surface-1 px-2.5 py-1.5 text-xs text-ink-primary placeholder:text-ink-muted"
+    />
+
+    @if (strategies().length > 1) {
+      <select
+        [value]="strategyFilter()"
+        (change)="setStrategyFilter($any($event.target).value)"
+        class="rounded-lg border border-line bg-surface-1 px-2.5 py-1.5 text-xs text-ink-primary"
+        aria-label="Filter by strategy"
+      >
+        <option value="all">All strategies</option>
+        @for (s of strategies(); track s) {
+          <option [value]="s">{{ STRATEGY_SHORT[s] }}</option>
+        }
+      </select>
+    }
+
+    <select
+      [value]="verdictFilter()"
+      (change)="setVerdictFilter($any($event.target).value)"
+      class="rounded-lg border border-line bg-surface-1 px-2.5 py-1.5 text-xs text-ink-primary"
+      aria-label="Filter by verdict"
+    >
+      <option value="all">All verdicts</option>
+      <option value="pass">Pass</option>
+      <option value="partial">Partial</option>
+      <option value="fail">Fail</option>
+    </select>
+  </div>
+
+  <div class="scroll-x">
+    <table class="w-full border-collapse text-xs">
+      <thead>
+        <tr class="border-b border-line">
+          @for (column of columns(); track column.id) {
+            <th
+              scope="col"
+              class="whitespace-nowrap px-3 py-2 text-left font-medium text-ink-secondary"
+            >
+              <button
+                type="button"
+                (click)="toggleSort(column.id)"
+                class="inline-flex items-center gap-1 hover:text-ink-primary"
+              >
+                {{ column.header }}
+                <span aria-hidden="true" class="text-ink-muted">{{
+                  sortIndicator(column.id)
+                }}</span>
+              </button>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.key) {
+          <tr
+            (click)="select.emit(row.result)"
+            tabindex="0"
+            (keydown)="onRowKeydown($event, row.result)"
+            class="cursor-pointer border-b border-line/60 transition-colors last:border-0 hover:bg-surface-2 focus:bg-surface-2 focus:outline-none"
+          >
+            @for (column of columns(); track column.id) {
+              <td class="px-3 py-2 align-top text-ink-primary">
+                @switch (column.id) {
+                  @case ('question') {
+                    <span class="line-clamp-2 max-w-[26rem] text-left" [title]="row.question">
+                      {{ row.question }}
+                    </span>
+                  }
+                  @case ('strategy') {
+                    <span class="flex items-center gap-1.5 whitespace-nowrap">
+                      <span
+                        aria-hidden="true"
+                        class="h-2 w-2 shrink-0 rounded-sm"
+                        [style.background]="row.strategyColor"
+                      ></span>
+                      {{ row.strategyLabel }}
+                    </span>
+                  }
+                  @case ('questionType') {
+                    <span class="whitespace-nowrap text-ink-secondary">{{ row.type }}</span>
+                  }
+                  @case ('mrr') {
+                    <span class="whitespace-nowrap tabular-nums text-ink-primary">{{
+                      row.mrr
+                    }}</span>
+                  }
+                  @case ('ndcg') {
+                    <span class="whitespace-nowrap tabular-nums text-ink-primary">{{
+                      row.ndcg
+                    }}</span>
+                  }
+                  @case ('faithfulness') {
+                    <span class="whitespace-nowrap tabular-nums text-ink-primary">
+                      {{ row.faithfulness }}
+                    </span>
+                  }
+                  @case ('judge') {
+                    <span class="whitespace-nowrap tabular-nums text-ink-primary">{{
+                      row.judge
+                    }}</span>
+                  }
+                  @case ('verdict') {
+                    <span class="whitespace-nowrap font-medium" [class]="row.verdictClass">
+                      <span aria-hidden="true">{{ row.verdictIcon }}</span> {{ row.verdict }}
+                    </span>
+                  }
+                  @case ('cost') {
+                    <span class="whitespace-nowrap tabular-nums text-ink-secondary">{{
+                      row.cost
+                    }}</span>
+                  }
+                  @case ('latency') {
+                    <span class="whitespace-nowrap tabular-nums text-ink-secondary">
+                      {{ row.latency }}
+                    </span>
+                  }
+                }
+              </td>
+            }
+          </tr>
+        }
+        @if (filtered().length === 0) {
+          <tr>
+            <td [attr.colspan]="columns().length" class="px-3 py-8 text-center text-ink-muted">
+              No questions match these filters.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (pageCount() > 1) {
+    <div class="flex items-center justify-between gap-2 border-t border-line p-3 text-xs">
+      <span class="text-ink-muted">Page {{ currentPage() + 1 }} of {{ pageCount() }}</span>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="btn-secondary px-2.5 py-1 text-xs"
+          (click)="previousPage()"
+          [disabled]="!canPreviousPage()"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          class="btn-secondary px-2.5 py-1 text-xs"
+          (click)="nextPage()"
+          [disabled]="!canNextPage()"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  }
+</div>
