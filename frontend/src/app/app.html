@@ -1,0 +1,143 @@
+<div class="min-h-screen bg-surface-2">
+  <header class="sticky top-0 z-30 border-b border-line bg-surface-1/90 backdrop-blur">
+    <!-- Hairline of the four step colours — the app's signature, and a reminder
+         that the setup steps map onto the charts below. -->
+    <div
+      aria-hidden="true"
+      class="h-0.5 w-full"
+      style="
+        background: linear-gradient(
+          90deg,
+          var(--step-1),
+          var(--step-2) 33%,
+          var(--step-3) 66%,
+          var(--step-4)
+        );
+      "
+    ></div>
+
+    <div class="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3">
+      <div class="flex items-center gap-2">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
+          <rect x="3" y="13" width="4" height="8" rx="1" fill="var(--step-1)" />
+          <rect x="10" y="8" width="4" height="13" rx="1" fill="var(--step-3)" />
+          <rect x="17" y="3" width="4" height="18" rx="1" fill="var(--step-4)" />
+        </svg>
+        <span class="text-sm font-semibold text-ink-primary">RAG Evaluation Benchmark</span>
+      </div>
+
+      <nav class="ml-6 hidden items-center sm:flex" aria-label="Progress">
+        @for (chip of phases(); track chip.phase; let i = $index; let last = $last) {
+          <span
+            class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors"
+            [class]="phaseClass(chip)"
+            [style.background]="chip.active ? phaseBackground(chip.color) : null"
+            [style.box-shadow]="chip.active ? phaseRing(chip.color) : null"
+            [attr.aria-current]="chip.active ? 'step' : null"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white"
+              [class.animate-pulse]="chip.pulse"
+              [style.background]="chip.active || chip.done ? chip.color : 'var(--border-strong)'"
+            >
+              {{ chip.done ? '✓' : chip.n }}
+            </span>
+            {{ chip.label }}
+          </span>
+          @if (!last) {
+            <span
+              aria-hidden="true"
+              class="mx-0.5 h-px w-5 transition-colors"
+              [style.background]="railDone(i) ? 'var(--status-good)' : 'var(--border-strong)'"
+            ></span>
+          }
+        }
+      </nav>
+
+      <div class="ml-auto flex items-center gap-2">
+        @if (meta.data()) {
+          <span
+            class="chip-tinted hidden lg:inline-flex"
+            [style.--chip-color]="pgvectorReady() ? 'var(--status-good)' : 'var(--status-warning)'"
+          >
+            <span aria-hidden="true">{{ pgvectorReady() ? '●' : '○' }}</span>
+            {{ pgvectorReady() ? 'pgvector ready' : 'pgvector not seeded' }}
+          </span>
+        }
+
+        <button
+          type="button"
+          class="btn-ghost px-2.5 py-1 text-xs"
+          (click)="startOver()"
+          [disabled]="resetting()"
+          title="Clear every selection and return to a fresh setup"
+        >
+          <span aria-hidden="true">↺</span>
+          <span class="hidden sm:inline">{{ resetting() ? 'Stopping…' : 'Start over' }}</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="cycleTheme()"
+          class="btn-ghost px-2 py-1 text-xs"
+          [title]="'Theme: ' + theme()"
+          [attr.aria-label]="'Theme: ' + theme() + '. Click to switch to ' + nextTheme() + '.'"
+        >
+          <span aria-hidden="true">{{ themeIcon() }}</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="px-4 py-6">
+    @if (meta.isLoading()) {
+      <div class="mx-auto flex w-full max-w-6xl flex-col gap-4">
+        <div class="skeleton h-8 w-64 rounded"></div>
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          @for (i of [0, 1, 2, 3]; track i) {
+            <div class="skeleton h-40 rounded-card"></div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (meta.isError()) {
+      <div class="mx-auto max-w-lg py-16 text-center">
+        <h2 class="text-sm font-semibold text-status-critical">Cannot reach the API</h2>
+        <p class="mt-2 text-xs leading-relaxed text-ink-secondary">{{ metaErrorMessage() }}</p>
+        <p class="mt-3 text-2xs text-ink-muted">
+          Start the backend with <code>npm run dev:backend</code>, then reload.
+        </p>
+        <button type="button" class="btn-secondary mt-4" (click)="meta.refresh()">Retry</button>
+      </div>
+    }
+
+    @if (meta.data(); as metaData) {
+      @switch (store.screen()) {
+        @case ('setup') {
+          <!-- Re-creating this block on reset is what clears the state the setup
+               screen owns — pasted text, open tables, stale error banners. -->
+          @for (nonce of [store.resetNonce()]; track nonce) {
+            <app-setup-page [meta]="metaData" />
+          }
+        }
+        @case ('progress') {
+          <app-evaluation-progress (cancel)="cancelRun()" />
+        }
+        @case ('results') {
+          <app-results-page (reset)="store.reset()" />
+        }
+      }
+    }
+  </main>
+
+  <footer class="border-t border-line px-4 py-5">
+    <p class="mx-auto max-w-6xl text-2xs leading-relaxed text-ink-muted">
+      Retrieval metrics (MRR, nDCG@5, Recall@5, Precision@5, context precision/recall) are computed
+      against graded relevance labels derived from each question&rsquo;s expected keywords and
+      reference answer. Answer metrics come from a separate judge model that sees the reference
+      answer; the answering model never does. Every run executes live — no result is cached.
+    </p>
+  </footer>
+</div>
