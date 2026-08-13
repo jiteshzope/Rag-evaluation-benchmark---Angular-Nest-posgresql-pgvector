@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "scripts": {
     "ng": "ng",
+    "postinstall": "node scripts/generate-environment.mjs",
+    "prestart": "node scripts/generate-environment.mjs",
     "start": "ng serve",
+    "prebuild": "node scripts/generate-environment.mjs --production",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "typecheck": "tsc -p tsconfig.app.json --noEmit"
